@@ -4,10 +4,12 @@ dotenv.config(); // <-- має бути на початку
 
 import express from "express";
 import cors from "cors";
+
 import authRoutes from "./routes/authRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
+import productRoutes from "./routes/productRoutes.js"; // <-- тільки один раз
+
 import pool from "./db.js";
-import productRoutes from "./routes/productRoutes.js";
 
 const app = express();
 
@@ -30,11 +32,9 @@ app.get("/test-db", async (req, res) => {
 });
 
 // --- Маршрути ---
-import productRoutes from "./routes/productRoutes.js";
 app.use("/api/products", productRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/order", orderRoutes);
-
 
 // --- Логування підключення до БД при старті ---
 (async () => {
@@ -50,4 +50,5 @@ app.use("/api/order", orderRoutes);
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
 console.log("DATABASE_URL =", process.env.DATABASE_URL);
+
 
