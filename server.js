@@ -7,6 +7,7 @@ import cors from "cors";
 import authRoutes from "./routes/authRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
 import pool from "./db.js";
+import productRoutes from "./routes/productRoutes.js";
 
 const app = express();
 
@@ -29,8 +30,11 @@ app.get("/test-db", async (req, res) => {
 });
 
 // --- Маршрути ---
+import productRoutes from "./routes/productRoutes.js";
+app.use("/api/products", productRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/order", orderRoutes);
+
 
 // --- Логування підключення до БД при старті ---
 (async () => {
