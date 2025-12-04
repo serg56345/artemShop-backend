@@ -10,37 +10,52 @@ import productRoutes from "./routes/productRoutes.js";
 
 import pool from "./db.js";
 
-const app = express();
-
-app.use(cors());
-app.use(express.json());
-
-app.get("/", (req, res) => res.send("Сервер працює ✅"));
-
-app.get("/test-db", async (req, res) => {
+// ------------------ INIT SERVER ------------------
+async function startServer() {
   try {
-    const result = await pool.query("SELECT NOW()");
-    res.json({ success: true, time: result.rows[0].now });
-  } catch (err) {
-    console.error("❌ DB test error:", err.message || err);
-    res.status(500).json({ success: false, error: "DB connection error" });
-  }
-});
+    console.log("⏳ Перевірка підключення до бази...");
 
-app.use("/api/products", productRoutes);
-app.use("/api/auth", authRoutes);
-app.use("/api/order", orderRoutes);
-
-(async () => {
-  try {
+    // 1. Перевірка підключення до БД перед запуском сервера
     await pool.query("SELECT 1");
     console.log("✅ Підключення до БД успішне");
-  } catch (err) {
-    console.error("❌ Помилка підключення до БД:", err.message || err);
-  }
-})();
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+    // 2. Створення додатку
+    const app = express();
+
+    app.use(cors());
+    app.use(express.json());
+
+    // 3. Тестовий маршрут
+    app.get("/", (req, res) => res.send("Сервер працює ✅"));
+
+    app.get("/test-db", async (req, res) => {
+      try {
+        const result = await pool.query("SELECT NOW()");
+        res.json({ success: true, time: result.rows[0].now });
+      } catch (err) {
+        console.error("❌ DB test error:", err.message || err);
+        res.status(500).json({ success: false, error: "DB connection error" });
+      }
+    });
+
+    // 4. Маршрути
+    app.use("/api/products", productRoutes);
+    app.use("/api/auth", authRoutes);
+    app.use("/api/order", orderRoutes);
+
+    // 5. Запуск сервера
+    const PORT = process.env.PORT || 5000;
+    app.listen(PORT, () =>
+      console.log(`🚀 Сервер запущено на порту ${PORT}`)
+    );
+
+  } catch (err) {
+    console.error("❌ Неможливо підключитись до БД:", err.message || err);
+    process.exit(1); // Сервер не запускається без БД
+  }
+}
+
+startServer();
+
 
 
