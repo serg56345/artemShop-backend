@@ -10,6 +10,16 @@ import productRoutes from "./routes/productRoutes.js";
 
 import pool from "./db.js";
 
+// ------------------ WARM-UP FUNCTION ------------------
+async function warmUpDatabase() {
+  try {
+    await pool.query("SELECT 1"); // Простий запит для "розігріву" бази
+    console.log("🔥 База розігріта!");
+  } catch (err) {
+    console.error("❌ Помилка розігріву бази:", err.message || err);
+  }
+}
+
 // ------------------ INIT SERVER ------------------
 async function startServer() {
   try {
@@ -24,6 +34,12 @@ async function startServer() {
 
     app.use(cors());
     app.use(express.json());
+
+    // ------------------ WARM-UP INTERVAL ------------------
+    // Викликаємо один раз на старті
+    warmUpDatabase();
+    // Потім повторюємо кожні 5 хвилин, щоб база не засинала
+    setInterval(warmUpDatabase, 5 * 60 * 1000);
 
     // 3. Тестовий маршрут
     app.get("/", (req, res) => res.send("Сервер працює ✅"));
