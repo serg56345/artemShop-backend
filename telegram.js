@@ -1,33 +1,66 @@
-import dotenv from "dotenv";
-import fetch from "node-fetch"; // або axios, якщо вже використовуєш
+import express from "express";
+import pool from "../db.js";
+import { sendTelegramMessage } from "../telegram.js"; // Тільки повідомлення, фото не використовуємо
 
-dotenv.config();
+const router = express.Router();
 
-const TOKEN = process.env.TELEGRAM_TOKEN;
-const CHAT_ID = process.env.TELEGRAM_CHAT_ID;
+router.post("/", async (req, res) => {
+    const { userId, items, total, phone, address, paymentType } = req.body;
 
-export async function sendTelegramMessage(text) {
-    if (!TOKEN || !CHAT_ID) {
-        console.error("❌ Telegram TOKEN або CHAT_ID не задано в .env");
-        return;
+    if (!userId || !items?.length || !total || !phone || !address || !paymentType) {
+        return res.status(400).json({ message: "Будь ласка, заповніть усі поля" });
     }
 
-
-    const url = `https://api.telegram.org/bot${TOKEN}/sendMessage`;
     try {
-        const res = await fetch(url, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ chat_id: CHAT_ID, text })
-        });
+        // 1️⃣ Зберігаємо замовлення
+        const result = await pool.query(
+            `INSERT INTO orders (user_id, items, total, phone, address, payment_type)
+       VALUES ($1,$2,$3,$4,$5,$6)
+       RETURNING *`,
+            [userId, JSON.stringify(items), total, phone, address, paymentType]
+        );
 
-        const data = await res.json();
-        if (!data.ok) {
-            console.error("❌ Помилка Telegram API:", data);
-        } else {
-            console.log("✅ Telegram повідомлення відправлено");
-        }
+        const order = result.rows[0];
+
+        // 2️⃣ items з БД -> масив
+        const orderItems = typeof order.items === "string"
+            ? JSON.parse(order.items)
+            : order.items;
+
+        // 3️⃣ Відповідь клієнту
+        res.json({ message: "Замовлення успішно оформлено!", order });
+
+        // 4️⃣ Імʼя користувача
+        const userRes = await pool.query(
+            "SELECT name FROM users WHERE id=$1",
+            [userId]
+        );
+        const userName = userRes.rows[0]?.name || `Користувач ${userId}`;
+
+        // 5️⃣ Текст замовлення
+        const itemsText = orderItems
+            .map(i => `• ${i.name} x${i.qty} — ${i.price} грн`)
+            .join("\n");
+
+        const message = `
+🛒 НОВЕ ЗАМОВЛЕННЯ
+👤 Користувач: ${userName}
+📞 Телефон: ${order.phone}
+📍 Адреса: ${order.address}
+💳 Оплата: ${order.payment_type}
+💰 Сума: ${order.total} грн
+
+📦 Товари:
+${itemsText}
+    `;
+
+        // 6️⃣ Надсилаємо текст
+        await sendTelegramMessage(message);
+
     } catch (err) {
-        console.error("❌ Помилка при відправці Telegram повідомлення:", err);
+        console.error("❌ Order error:", err);
+        res.status(500).json({ message: "Помилка сервера" });
     }
-}
+});
+
+export default router;
