@@ -7,6 +7,8 @@ import cors from "cors";
 import authRoutes from "./routes/authRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
 import productRoutes from "./routes/productRoutes.js";
+import blogRoutes from "./routes/blogRoutes.js";
+import commentRoutes from "./routes/commentRoutes.js";
 
 import pool from "./db.js";
 
@@ -58,6 +60,9 @@ async function startServer() {
     app.use("/api/products", productRoutes);
     app.use("/api/auth", authRoutes);
     app.use("/api/order", orderRoutes);
+    app.use("/api/posts", blogRoutes);
+    app.use("/api/comments", commentRoutes);
+    
 
     // 5. Запуск сервера
     const PORT = process.env.PORT || 5000;
