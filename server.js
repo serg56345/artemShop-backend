@@ -34,7 +34,11 @@ async function startServer() {
     // 2. Створення додатку
     const app = express();
 
-    app.use(cors());
+    app.use(cors({
+      origin: "https://artemshop-frontend-1.onrender.com",
+      methods: ["GET", "POST", "PUT", "DELETE"],
+      credentials: true
+    }));
     app.use(express.json());
 
     // ------------------ WARM-UP INTERVAL ------------------
@@ -62,7 +66,7 @@ async function startServer() {
     app.use("/api/order", orderRoutes);
     app.use("/api/posts", blogRoutes);
     app.use("/api/comments", commentRoutes);
-    
+
 
     // 5. Запуск сервера
     const PORT = process.env.PORT || 5000;
