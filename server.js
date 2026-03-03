@@ -35,12 +35,16 @@ async function startServer() {
     const app = express();
 
     app.use(cors({
-      origin: "https://artemshop-frontend-1.onrender.com",
+      origin: [
+        "http://127.0.0.1:5500",
+        "http://localhost:5500",
+        "https://artemshop-frontend-1.onrender.com"
+      ],
       methods: ["GET", "POST", "PUT", "DELETE"],
       credentials: true
     }));
-    app.use(express.json());
 
+    app.use(express.json());
     // ------------------ WARM-UP INTERVAL ------------------
     // Викликаємо один раз на старті
     warmUpDatabase();
